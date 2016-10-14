@@ -1,0 +1,10 @@
+		content
+		start
+		{{each nameArray}}
+		<span>name:{{$value.name}} age:{{$value.age}}</span>
+		{{/each}}
+		End
+		{{each goodsArray}}
+		name:{{$value.name}} age:{{$value.age}}
+		{{/each}}
+		End2
