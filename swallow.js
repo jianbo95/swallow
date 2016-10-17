@@ -1,7 +1,7 @@
 /**
  * swallow : 前端模板引擎
  * version : 0.1
- * author : 
+ * author : Jianbo
  */
 
 (function(){
