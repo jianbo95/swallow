@@ -2,9 +2,16 @@
 		start
 		{{each nameArray}}
 		<span>name:{{$value.name}} age:{{$value.age}}</span>
-		{{/each}}
+		{{/each nameArray}}
 		End
-		{{each goodsArray}}
-		name:{{$value.name}} age:{{$value.age}}
-		{{/each}}
+
+		{{each Catalog}}
+		类型名:{{$value.name}} 数量:{{$value.count}}
+			{{each $value.sonCatalog}}
+			子类型名:{{$value.name}} 数量:{{$value.count}}
+				{{each $value.sonCatalog}}
+				子类型名:{{$value.name}} 数量:{{$value.count}}
+				{{/each}}
+			{{/each}}
+		{{/each Catalog}}
 		End2
