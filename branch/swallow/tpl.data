@@ -1,3 +1,4 @@
+		{{title}}
 		content
 		start
 		{{each nameArray}}
@@ -15,3 +16,9 @@
 			{{/each}}
 		{{/each Catalog}}
 		End2
+
+		{{if name == "Peihua"}}
+		佩华
+		{{else}}
+		其他人
+		{{/if}}

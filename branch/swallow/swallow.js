@@ -12,18 +12,15 @@
     +      "var text=''.concat.apply('',arguments);"
     +       concat
     +  "}";
-
-    var include = "function(filename,data){"
-    +      "data=data||$data;"
-    +      "var text=$utils.$include(filename,data,$filename);"
-    +       concat
-    +   "}";
+    var eachLoop = 0; // 记录循环次数
 
 	// 数组循环
 	var foreach = function(list, handler){
-		for (var i = 0; i < list.length; i++) {
-			handler(list[i]);
-		};
+		if(list != undefined) {
+			for (var i = 0; i < list.length; i++) {
+				handler(list[i]);
+			}
+		}
 	}
 
 	// 语法分析器
@@ -31,13 +28,15 @@
 
 	    code = code.replace(/^\s/, '');
 
-	    var split = code.split(' ');
-	    var key = split.shift();
-	    var args = split.join(' ');
+	    var split = code.split(' '); // 分离逻辑代码
+	    var key = split.shift(); // 获取逻辑关键字
+	    var args = split.join(' '); // 获取参数
 
 	    switch (key) {
 
 	        case 'if':
+
+	        	console.log(args);
 
 	            code = 'if(' + args + '){';
 	            break;
@@ -49,7 +48,7 @@
 	            } else {
 	                split = '';
 	            }
-
+	            
 	            code = '}else' + split + '{';
 	            break;
 
@@ -70,28 +69,42 @@
 	            if (as !== 'as') {
 	                object = '[]';
 	            }
-	            
+
+	            // 从$model中取得变量
+	            if (eachLoop == 0) {
+	        		// 闭合，外部无循环
+	        		object = "$model." + object;
+	        	} else {
+	        		// 未闭合，在循环内部
+	        		object = object;
+	        		// 在循环内部获取外部变量? 不太可能
+	        	}
+
 	            code =  '$each(' + object + ',function(' + param + '){';
+
+	            eachLoop ++;
 	            break;
 
 	        case '/each':
-
+	        	eachLoop --;
 	            code = '});';
 	            break;
 
 	        case 'echo':
-
 	            code = 'print(' + args + ');';
 	            break;
 
-	        case 'print':
-	        case 'include':
-
-	            code = key + '(' + split.join(',') + ');';
-	            break;
-
 	        default:
-	        	code = '=' + code;
+	        	var param;
+	        	if (eachLoop == 0) {
+	        		// 闭合，外部无循环
+	        		param = "$model." + code;
+	        	} else {
+	        		// 未闭合，在循环内部
+	        		param = code;
+	        		// 在循环内部获取外部变量? 不太可能
+	        	}
+	        	code = '=' + param;
 	            break;
 	    }
 	    
@@ -107,54 +120,13 @@
 	    // <%=#value%> 等同 v2.0.3 之前的 <%==value%>
 	    if (code.indexOf('=') === 0) {
 
-	        var escapeSyntax = escape && !/^=[=#]/.test(code);
-
 	        code = code.replace(/^=[=#]?|[\s;]*$/g, '');
 
-	        code = "$string(" + code + ")";
+	        code = "String(" + code + ")";
 
 	        code = outList[1] + code + outList[2];
 
 	    }
-	    
-	    // 提取模板中的变量名
-	    // var variableList = getVariable(code);
-	    // forEach(variableList, function (name) {
-	        
-	    //     // name 值可能为空，在安卓低版本浏览器下
-	    //     if (!name || uniq[name]) {
-	    //         return;
-	    //     }
-
-	    //     var value;
-
-	    //     // 声明模板变量
-	    //     // 赋值优先级:
-	    //     // [include, print] > utils > helpers > data
-	    //     if (name === 'print') {
-
-	    //         value = print;
-
-	    //     } else if (name === 'include') {
-	            
-	    //         value = include;
-	            
-	    //     } else if (utils[name]) {
-
-	    //         value = "$utils." + name;
-
-	    //     } else if (helpers[name]) {
-
-	    //         value = "$helpers." + name;
-
-	    //     } else {
-
-	    //         value = "$data." + name;
-	    //     }
-	        
-	    //     headerCode += name + "=" + value + ",";
-	        
-	    // });
 	    
 	    return code + "\n";
 	} // end logic
@@ -173,13 +145,9 @@
 		return code;
 	}
 
-	function compiler (codeArray, module) {
+	function compiler (codeArray, model) {
 
-	    var headerCode = "'use strict';";
-
-	    var $data = module;
-	    var model = "$each=foreach,nameArray=$data.nameArray,Catalog=$data.Catalog,$out='';";
-	    headerCode += model;
+	    var headerCode = "'use strict';var $out;";
 
 	    var mainCode = outList[0];
 
@@ -187,7 +155,7 @@
 
     	for (var i = 0; i < codeArray.length; i++) {
 	        var code = codeArray[i];
-	        // console.log(code);
+
 	        var $0 = code[0];
 	        var $1 = code[1];
 
@@ -205,10 +173,13 @@
 	    
 		var code = headerCode + mainCode + footerCode;
 
-		var val = new Function(code);
-		console.log(val());
+		console.log(code);
 
-		return code;
+		var val = new Function('$model', '$each', code);
+		var result = val(model, foreach);
+
+		//return code;
+		return String(result);
 	}
 	
 	var swallow = function(){
@@ -219,10 +190,7 @@
 		// code 与 tag分离
 		var getCodeStream = function(source) {
 			var codeStream = new Array();
-			var code = new String(source);
-			var closeList = code.split(openTag);
-			var flag = true;
-			foreach(closeList, function(temp) {
+			foreach(source.split(openTag), function(temp) {
 				// list: [html]
 		        // list: [logic, html] 
 		        // closeTag的前面一定是逻辑语句
@@ -234,10 +202,8 @@
 		
 		var render = function(source, module) {
 			var codeArray = getCodeStream(source);
-			// html与逻辑语法分离
-			var code = compiler(codeArray, module);
-
-			console.log(code);
+			var result = compiler(codeArray, module);
+			return result;
 		};
 
 		return {
