@@ -6,6 +6,19 @@
 
 (function(){
 
+	var outList = ["$out='';", "$out+=", ";", "$out"];
+	var concat = "$out+=text;return $out;";
+	var print = "function(){"
+    +      "var text=''.concat.apply('',arguments);"
+    +       concat
+    +  "}";
+
+    var include = "function(filename,data){"
+    +      "data=data||$data;"
+    +      "var text=$utils.$include(filename,data,$filename);"
+    +       concat
+    +   "}";
+
 	// 数组循环
 	var foreach = function(list, handler){
 		for (var i = 0; i < list.length; i++) {
@@ -85,23 +98,88 @@
 	    return code;
 	};
 
-	function compiler (codeArray) {
+	// 将逻辑语句写进函数里执行
+	function logic (code) {
 
-		var outList = ["$out='';", "$out+=", ";", "$out"];
-		var concat = "$out+=text;return $out;";
-		var print = "function(){"
-	    +      "var text=''.concat.apply('',arguments);"
-	    +       concat
-	    +  "}";
+	    code = parser(code);
+	    
+	    // 输出语句. 编码: <%=value%> 不编码:<%=#value%>
+	    // <%=#value%> 等同 v2.0.3 之前的 <%==value%>
+	    if (code.indexOf('=') === 0) {
 
-	    var include = "function(filename,data){"
-	    +      "data=data||$data;"
-	    +      "var text=$utils.$include(filename,data,$filename);"
-	    +       concat
-	    +   "}";
+	        var escapeSyntax = escape && !/^=[=#]/.test(code);
 
-	    var headerCode = "'use strict';"
-	    + "var $utils=this,$helpers=$utils.$helpers,";
+	        code = code.replace(/^=[=#]?|[\s;]*$/g, '');
+
+	        code = "$string(" + code + ")";
+
+	        code = outList[1] + code + outList[2];
+
+	    }
+	    
+	    // 提取模板中的变量名
+	    // var variableList = getVariable(code);
+	    // forEach(variableList, function (name) {
+	        
+	    //     // name 值可能为空，在安卓低版本浏览器下
+	    //     if (!name || uniq[name]) {
+	    //         return;
+	    //     }
+
+	    //     var value;
+
+	    //     // 声明模板变量
+	    //     // 赋值优先级:
+	    //     // [include, print] > utils > helpers > data
+	    //     if (name === 'print') {
+
+	    //         value = print;
+
+	    //     } else if (name === 'include') {
+	            
+	    //         value = include;
+	            
+	    //     } else if (utils[name]) {
+
+	    //         value = "$utils." + name;
+
+	    //     } else if (helpers[name]) {
+
+	    //         value = "$helpers." + name;
+
+	    //     } else {
+
+	    //         value = "$data." + name;
+	    //     }
+	        
+	    //     headerCode += name + "=" + value + ",";
+	        
+	    // });
+	    
+	    return code + "\n";
+	} // end logic
+
+	function html(code) {
+		// 字符串转义
+		var stringify = function (code) {
+		    return "'" + code
+		    // 单引号与反斜杠转义
+		    .replace(/('|\\)/g, '\\$1')
+		    // 换行符转义(windows + linux)
+		    .replace(/\r/g, '\\r')
+		    .replace(/\n/g, '\\n') + "'";
+		}
+		code = outList[1] + stringify(code) + outList[2] + "\n";
+		return code;
+	}
+
+	function compiler (codeArray, module) {
+
+	    var headerCode = "'use strict';";
+
+	    var $data = module;
+	    var model = "$each=foreach,nameArray=$data.nameArray,Catalog=$data.Catalog,$out='';";
+	    headerCode += model;
 
 	    var mainCode = outList[0];
 
@@ -115,93 +193,22 @@
 
 	        // code: [html]
 	        if (code.length === 1) {
-	            mainCode += $0;
+	            mainCode += html($0);
 	        // code: [logic, html]
 	        } else {
 	            mainCode += logic($0);
 	            if ($1) {
-	                mainCode += $1;
+	                mainCode += html($1);
 	            }
 	        }
 	    };
 	    
 		var code = headerCode + mainCode + footerCode;
 
-		// 将逻辑语句写进函数里执行
-		function logic (code) {
+		var val = new Function(code);
+		console.log(val());
 
-		    code = parser(code);
-		    
-		    // 输出语句. 编码: <%=value%> 不编码:<%=#value%>
-		    // <%=#value%> 等同 v2.0.3 之前的 <%==value%>
-		    if (code.indexOf('=') === 0) {
-
-		        var escapeSyntax = escape && !/^=[=#]/.test(code);
-
-		        code = code.replace(/^=[=#]?|[\s;]*$/g, '');
-
-		        // 对内容编码
-		        if (escapeSyntax) {
-
-		            var name = code.replace(/\s*\([^\)]+\)/, '');
-
-		            // 排除 utils.* | include | print
-		            
-		            if (!utils[name] && !/^(include|print)$/.test(name)) {
-		                code = "$escape(" + code + ")";
-		            }
-
-		        // 不编码
-		        } else {
-		            code = "$string(" + code + ")";
-		        }
-		        
-
-		        code = replaces[1] + code + replaces[2];
-
-		    }
-		    
-		    // 提取模板中的变量名
-		    var variableList = getVariable(code);
-		    forEach(variableList, function (name) {
-		        
-		        // name 值可能为空，在安卓低版本浏览器下
-		        if (!name || uniq[name]) {
-		            return;
-		        }
-
-		        var value;
-
-		        // 声明模板变量
-		        // 赋值优先级:
-		        // [include, print] > utils > helpers > data
-		        if (name === 'print') {
-
-		            value = print;
-
-		        } else if (name === 'include') {
-		            
-		            value = include;
-		            
-		        } else if (utils[name]) {
-
-		            value = "$utils." + name;
-
-		        } else if (helpers[name]) {
-
-		            value = "$helpers." + name;
-
-		        } else {
-
-		            value = "$data." + name;
-		        }
-		        
-		        headerCode += name + "=" + value + ",";
-		        
-		    });
-		    
-		    return code + "\n";
-		} // end logic
+		return code;
 	}
 	
 	var swallow = function(){
@@ -228,7 +235,7 @@
 		var render = function(source, module) {
 			var codeArray = getCodeStream(source);
 			// html与逻辑语法分离
-			var code = compiler(codeArray);
+			var code = compiler(codeArray, module);
 
 			console.log(code);
 		};
