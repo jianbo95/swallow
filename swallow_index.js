@@ -11,7 +11,7 @@ $(function(){
 		model = {
 			title : "地上最强的人",
 			article : "天将降大任于斯人也，必先苦其心志",
-			name : "Peihua2"
+			name : "LiangPeihua"
 		};
 		model.nameArray = [
 			{name : "sword", age : 9},
@@ -38,7 +38,8 @@ $(function(){
 			}
 		];
 		source = tpl;
-		console.log(source);
+		log.info(source, "return2Ln");
+
 		var result = Swallow.render(source, model);
 		$("#target").val(result);
 	};
