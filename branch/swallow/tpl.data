@@ -2,10 +2,17 @@
 		content
 		start
 		{{each nameArray}}
-		<span>name:{{$value.name}} age:{{$value.age}}</span>
-		{{/each nameArray}}
+		<span>
+			name:
+			{{if $value.name == "sword"}} 剑 (保留)
+			{{else if $value.name == "huang"}} 狂 (删除)
+			{{else}} 波 (删除)
+			{{/if}}
+			age: {{$value.age}}
+		</span>
+		{{/each}}
 		End
-
+		------------------------------------
 		{{each Catalog}}
 		类型名:{{$value.name}} 数量:{{$value.count}}
 			{{each $value.sonCatalog}}
@@ -14,11 +21,13 @@
 				子类型名:{{$value.name}} 数量:{{$value.count}}
 				{{/each}}
 			{{/each}}
-		{{/each Catalog}}
+		{{/each}} 
 		End2
-
+		------------------------------------
 		{{if name == "Peihua"}}
 		佩华
+		{{else if name == "LiangPeihua"}}
+		梁佩华
 		{{else}}
 		其他人
 		{{/if}}
