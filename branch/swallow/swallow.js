@@ -7,7 +7,6 @@
 
 /**
  * 定义配置对象
- * @type {Object}
  */
 var Config = {};
 
@@ -17,15 +16,14 @@ Config.compress = true; // 去除标签的占行
 
 /**
  * 定义工具对象
- * @type {Object}
  */
 var Util = {};
 
 // 数组循环
-Util.foreach  = function(list, handler){
+Util.foreach  = function(list, callback){
 	if(list != undefined) {
 		for (var i = 0; i < list.length; i++) {
-			handler(list[i]);
+			callback(list[i]);
 		}
 	}
 };
@@ -37,14 +35,12 @@ Util.error = function(str) {
 
 /**
  * 去除标签中的换行
- * @param source
  */
-Util.compress = function(source) {
-	if(!Config.compress) {
+Util.compress = function(source, isCompress) {
+	if(!isCompress) {
 		return source;
 	}
 	var code = source;
-	// 对source进行预处理
 	// 去除{{}}后面的回车符
 	// 匹配开头的tab符，空格符，和末尾的回车符
 	var ln = "[\s ]*\\r?\\n";
@@ -55,6 +51,7 @@ Util.compress = function(source) {
 		"[\t ]*{{else if [^\n]*}" + ln,
 		"[\t ]*{{/if}}" + ln,
 		"[\t ]*{{else}}" + ln,
+		"[\t ]*{{set [^\r\n]*}}" + ln,
 	];
 	for (var i = 0; i < regList.length; i++) {
 		var regStr = regList[i];
@@ -71,7 +68,7 @@ Util.compress = function(source) {
 				code = code.replace(match, newMatch);
 			};
 		}
-	};
+	}
 	return code;
 }; // end compress
 
@@ -142,8 +139,9 @@ Util.parser = function (code) {
 			}
 
 			object = Map.toMap(object);
-			code =  '$each(' + object + ',function(' + value + ',' + index+ '){';
-
+			code =  '$each(' + object + ',function(' + value + ',' + index+ '){\n';
+			code += 'var $value = '+value +';\n';
+			code += 'var $index = '+index +';';
 			Map.loop(); // 开启循环
 			break;
 
@@ -154,6 +152,13 @@ Util.parser = function (code) {
 			}
 			Map.loopClose(); // 关闭循环
 			code = '});';
+			break;
+
+		case 'set':
+			code = Map.toMap(args);
+			if(Map.loopTimes != 0) {
+				code = '$value.' + code;
+			}
 			break;
 
 		default:
@@ -270,7 +275,7 @@ Util.parser = function (code) {
 		};
 
 		self.render = function(source, model) {
-			var code = Util.compress(source);
+			var code = Util.compress(source, Config.compress);
 			// 获取代码数组
 			var codeArray = splitCodeByTag(code);
 			// 渲染模板

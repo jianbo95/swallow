@@ -9,7 +9,7 @@ $(function(){
 
 	var resolve = function() {
 		model = {
-			title : "地上最强的人",
+			title : "史上最强的人",
 			article : "天将降大任于斯人也，必先苦其心志",
 			name : "LiangPeihua"
 		};
