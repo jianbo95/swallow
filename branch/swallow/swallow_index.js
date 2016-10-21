@@ -38,9 +38,9 @@ $(function(){
 			}
 		];
 		source = tpl;
-		log.info(source, "return2Ln");
 
 		var result = Swallow.render(source, model);
+		$("#source").val(source);
 		$("#target").val(result);
 	};
 
