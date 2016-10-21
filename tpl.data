@@ -1,16 +1,18 @@
 	{{title}}
-	content
+	{{set content = "改变世界的少年"}}
+	content:{{content}}
 	start
-	{{each nameArray}}
+	{{each nameArray as V I}}
 	<span>
-		{{if $value.name == "sword"}} 
-		name:剑
-		{{else if $value.name == "huang"}} 
-		name:狂
+		{{if V.name == "sword"}} 
+		{{set nn = "剑"}}
+		{{else if V.name == "huang"}} 
+		{{set nn = "狂"}}
 		{{else}}
-		name:波
+		{{set nn = "波"}}
 		{{/if}}
-		age: {{$value.age}}
+		name: {{V.nn}}
+		age: {{V.age}}
 	</span>
 	{{/each}}
 	End
