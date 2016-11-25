@@ -1,175 +1,183 @@
 /**
  * swallow : 前端模板引擎
- * version : 0.2
+ * version : [
+ * 		0.3 : 优化循环无法获取外部全局变量
+ * ]
+ * next version : 增加 debug 功能
  * author : jianbo
  * time : 2016/10/21
+ * update : 2016/11/24
  */
 
-/**
- * 定义配置对象
- */
-var Config = {};
+(function(){
 
-Config.openTag = "{{"; // 左标签
-Config.closeTag = "}}"; // 右标签
-Config.compress = true; // 去除标签的占行
-
-/**
- * 定义工具对象
- */
-var Util = {};
-
-// 数组循环
-Util.foreach  = function(list, callback){
-	if(list != undefined) {
-		for (var i = 0; i < list.length; i++) {
-			callback(list[i]);
-		}
-	}
-};
-
-// 打印错误信息
-Util.error = function(str) {
-	console.log("Error: "+str);
-}
-
-/**
- * 去除标签中的换行
- */
-Util.compress = function(source, isCompress) {
-	if(!isCompress) {
-		return source;
-	}
-	var code = source;
-	// 去除{{}}后面的回车符
-	// 匹配开头的tab符，空格符，和末尾的回车符
-	var ln = "[\s ]*\\r?\\n";
-	var regList = [
-		"[\t ]*{{each [^\r\n]*}}" + ln,
-		"[\t ]*{{/each}}" + ln,
-		"[\t ]*{{if [^\r\n]*}" + ln,
-		"[\t ]*{{else if [^\n]*}" + ln,
-		"[\t ]*{{/if}}" + ln,
-		"[\t ]*{{else}}" + ln,
-		"[\t ]*{{set [^\r\n]*}}" + ln,
-	];
-	for (var i = 0; i < regList.length; i++) {
-		var regStr = regList[i];
-		var mode = "gm";
-		var reg = new RegExp(regStr, mode);
-		var matchs = code.match(reg);
-		if(matchs != undefined) {
-			for (var j = 0; j < matchs.length; j++) {
-				var match = (matchs[j]);
-				// 去除结尾的换行符
-				var match2 = match.replace(/\r?\n$/, "");
-				// 去除开头的空白符
-				var newMatch = match2.replace(/^[\t ]*/, "");
-				code = code.replace(match, newMatch);
-			};
-		}
-	}
-	return code;
-}; // end compress
-
-// 数据模型映射模块
-Util.Map = {
-	model : "$model", // 模型变量名
-	loopTimes : 0, // 记录循环次数
-	loop : function() {
-		this.loopTimes ++;
-	},
-	loopClose : function() {
-		this.loopTimes --;
-	},
 	/**
-	 * [map 获取模型映射]
-	 * @param  name [变量名]
-	 * @return      [模型.变量名]
+	 * 定义配置对象
 	 */
-	toMap : function(name) {
-		if (this.loopTimes == 0) {
-			// 循环外部
-			return this.model + "." + name;
-		} else {
-			// 循环内部
-			return name;
+	var Config = {};
+
+	Config.openTag = "{{"; // 左标签
+	Config.closeTag = "}}"; // 右标签
+	Config.compress = true; // 去除标签的占行
+
+	/**
+	 * 定义工具对象
+	 */
+	var Util = {};
+
+	// 数组循环
+	Util.foreach  = function(list, callback){
+		if(list != undefined) {
+			for (var i = 0; i < list.length; i++) {
+				callback(list[i]);
+			}
 		}
+	};
+
+	// 打印错误信息
+	Util.error = function(str) {
+		console.log("Error: "+str);
 	}
-}; // End Map
 
-// 语法分析器
-Util.parser = function (code) {
-	var Map = Util.Map;
+	/**
+	 * 去除标签中的换行
+	 */
+	Util.compress = function(source, isCompress) {
+		if(!isCompress) {
+			return source;
+		}
+		var code = source;
+		// 去除{{}}后面的回车符
+		// 匹配开头的tab符，空格符，和末尾的回车符
+		var ln = "[\s ]*\\r?\\n";
+		var regList = [
+			"[\t ]*{{each [^\r\n]*}}" + ln,
+			"[\t ]*{{/each}}" + ln,
+			"[\t ]*{{if [^\r\n]*}" + ln,
+			"[\t ]*{{else if [^\n]*}" + ln,
+			"[\t ]*{{/if}}" + ln,
+			"[\t ]*{{else}}" + ln,
+			"[\t ]*{{set [^\r\n]*}}" + ln,
+		];
+		for (var i = 0; i < regList.length; i++) {
+			var regStr = regList[i];
+			var mode = "gm";
+			var reg = new RegExp(regStr, mode);
+			var matchs = code.match(reg);
+			if(matchs != undefined) {
+				for (var j = 0; j < matchs.length; j++) {
+					var match = (matchs[j]);
+					// 去除结尾的换行符
+					var match2 = match.replace(/\r?\n$/, "");
+					// 去除开头的空白符
+					var newMatch = match2.replace(/^[\t ]*/, "");
+					code = code.replace(match, newMatch);
+				};
+			}
+		}
+		return code;
+	}; // end compress
 
-	var split = code.split(' '); // 分离逻辑代码
-	var key = split.shift(); // 获取逻辑关键字
-	var args = split.join(' '); // 获取参数
-
-	switch (key) {
-
-		case 'if':
-			var condition = Map.toMap(args);
-			code = 'if(' + condition + '){';
-			break;
-
-		case 'else':
-			if (split.shift() === 'if') {
-				var condition = split.join(' ');
-				condition = Map.toMap(condition);
-				code = '}else if(' + condition + '){';
+	// 数据模型映射模块
+	Util.Map = {
+		model : "$model", // 模型变量名
+		loopTimes : 0, // 记录循环次数
+		loop : function() {
+			this.loopTimes ++;
+		},
+		loopClose : function() {
+			this.loopTimes --;
+		},
+		/**
+		 * [map 获取模型映射]
+		 * @param  name [变量名]
+		 * @return      [模型.变量名]
+		 */
+		toMap : function(name) {
+			if (this.loopTimes == 0) {
+				return this.model + "." + name;
 			} else {
-				code = '}else{';
+				// 循环内部 
+				// 判断是否引用循环全局变量 $model，不包含"." 不包含$
+				var reg = /^[a-zA-Z]*$/;
+				if(reg.test(name)) {
+					return this.model + "." + name;
+				}
+				return name;
 			}
-			break;
+		}
+	}; // End Map
 
-		case '/if':
-			code = '}';
-			break;
+	// 语法分析器
+	Util.parser = function (code) {
+		var Map = Util.Map;
 
-		case 'each':
-			
-			var object = split[0] || '$data';
-			var as     = split[1] || 'as';
-			var value  = split[2] || '$value';
-			var index  = split[3] || '$index';
-			
-			if (as !== 'as') {
-				Util.error("{{"+code+"}} is invalid!");
-			}
+		var split = code.split(' '); // 分离逻辑代码
+		var key = split.shift(); // 获取逻辑关键字
+		var args = split.join(' '); // 获取参数
 
-			object = Map.toMap(object);
-			code =  '$each(' + object + ',function(' + value + ',' + index+ '){\n';
-			code += 'var $value = '+value +';\n';
-			code += 'var $index = '+index +';';
-			Map.loop(); // 开启循环
-			break;
+		switch (key) {
 
-		case '/each':
+			case 'if':
+				var condition = Map.toMap(args);
+				code = 'if(' + condition + '){';
+				break;
 
-			if(code != "/each") {
-				Util.error("{{"+code+"}} is invalid!");
-			}
-			Map.loopClose(); // 关闭循环
-			code = '});';
-			break;
+			case 'else':
+				if (split.shift() === 'if') {
+					var condition = split.join(' ');
+					condition = Map.toMap(condition);
+					code = '}else if(' + condition + '){';
+				} else {
+					code = '}else{';
+				}
+				break;
 
-		case 'set':
-			code = Map.toMap(args);
-			if(Map.loopTimes != 0) {
-				code = '$value.' + code;
-			}
-			break;
+			case '/if':
+				code = '}';
+				break;
 
-		default:
-			var param = Map.toMap(code);
-			code = '=' + param;
-			break;
-	}
-	return code;
-};
+			case 'each':
+				
+				var object = split[0] || '$data';
+				var as     = split[1] || 'as';
+				var value  = split[2] || '$value';
+				var index  = split[3] || '$index';
+				
+				if (as !== 'as') {
+					Util.error("{{"+code+"}} is invalid!");
+				}
 
-(function(Util, Config){
+				object = Map.toMap(object);
+				code =  '$each(' + object + ',function(' + value + ',' + index+ '){\n';
+				code += 'var $value = '+value +';\n';
+				code += 'var $index = '+index +';';
+				Map.loop(); // 开启循环
+				break;
+
+			case '/each':
+
+				if(code != "/each") {
+					Util.error("{{"+code+"}} is invalid!");
+				}
+				Map.loopClose(); // 关闭循环
+				code = '});';
+				break;
+
+			case 'set':
+				code = Map.toMap(args);
+				if(Map.loopTimes != 0) {
+					code = '$value.' + code;
+				}
+				break;
+
+			default:
+				var param = Map.toMap(code);
+				code = '=' + param;
+				break;
+		}
+		return code;
+	};
 
 	var foreach = Util.foreach;
 
@@ -297,4 +305,4 @@ Util.parser = function (code) {
 		window.Swallow = swallow;
 	}
 
-}(Util, Config));
+}());
