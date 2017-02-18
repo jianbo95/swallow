@@ -11,6 +11,8 @@
 
 (function(){
 
+	"use strict";
+
 	/**
 	 * 定义配置对象
 	 */
@@ -67,7 +69,7 @@
 			var mode = "gm";
 			var reg = new RegExp(regStr, mode);
 			var matchs = code.match(reg);
-			if(matchs != undefined) {
+			if(matchs !== undefined) {
 				for (var j = 0; j < matchs.length; j++) {
 					var match = (matchs[j]);
 					// 去除结尾的换行符
@@ -97,7 +99,7 @@
 		 * @return      [模型.变量名]
 		 */
 		toMap : function(name) {
-			if (this.loopTimes == 0) {
+			if (this.loopTimes === 0) {
 				return this.model + "." + name;
 			} else {
 				// 循环内部 
@@ -126,7 +128,7 @@
 				break;
 
 			case 'else':
-				if (split.shift() == 'if') {
+				if (split.shift() === 'if') {
 					var condition = split.join(' ');
 					condition = Map.toMap(condition);
 					code = '}else if(' + condition + '){';
@@ -146,7 +148,7 @@
 				var value  = split[2] || '$value';
 				var index  = split[3] || '$index';
 				
-				if (as != 'as') {
+				if (as !== 'as') {
 					Util.error("{{"+code+"}} is invalid!");
 				}
 
@@ -168,7 +170,7 @@
 
 			case 'set':
 				code = Map.toMap(args);
-				if(Map.loopTimes != 0) {
+				if(Map.loopTimes !== 0) {
 					code = '$value.' + code;
 				}
 				break;
@@ -192,7 +194,7 @@
 			// 逻辑语句
 			var logic = function(code) {
 				code = Util.parser(code);
-				if (code.indexOf('=') == 0) {
+				if (code.indexOf('=') === 0) {
 					code = "$out+" + code + ";";
 				}
 				return code + "\n";
@@ -244,7 +246,7 @@
 				// list: [logic, html] 
 				// closeTag的前面一定是逻辑语句
 				var list = closeSource.split(Config.closeTag);
-				if (list.length == 1) {
+				if (list.length === 1) {
 					codeArray.push(getHtml(list[0]));
 				} else {
 					codeArray.push(getLogic(list[0]));
