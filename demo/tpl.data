@@ -1,15 +1,15 @@
 	{{title}}
-	{{set content = "改变世界的少年"}}
+	{{set content = "这是一个模板引擎"}}
 	content:{{content}}
 	start
 	{{each nameArray as V I}}
 	<span>
-		{{if V.name == "sword"}} 
-		{{set nn = "剑"}}
-		{{else if V.name == "huang"}} 
-		{{set nn = "狂"}}
+		{{if V.name == "A"}} 
+		{{set nn = "a"}}
+		{{else if V.name == "B"}} 
+		{{set nn = "b"}}
 		{{else}}
-		{{set nn = "波"}}
+		{{set nn = "c"}}
 		{{/if}}
 		name: {{V.nn}}
 		age: {{V.age}}
@@ -28,10 +28,10 @@
 	{{/each}} 
 	End2
 	------------------------------------
-	{{if name == "Peihua"}}
-	佩华
-	{{else if name == "LiangPeihua"}}
-	梁佩华
+	{{if name == "God"}}
+	神
+	{{else if name == "Alex"}}
+	阿列克斯
 	{{else}}
 	其他人
 	{{/if}}
