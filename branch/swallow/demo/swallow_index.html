@@ -4,7 +4,7 @@
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 	<title>swallow的用法</title>
 	<script type="text/javascript" src="./jquery.min.js"></script>
-	<script type="text/javascript" src="./swallow.min.js"></script>
+	<script type="text/javascript" src="../dist/swallow.min.js"></script>
 	<script type="text/javascript" src="./swallow_index.js"></script>
 	<style type="text/css">
 	textarea {
@@ -17,5 +17,14 @@
 <body>
 <textarea id="source" style="width: 350px; height:600px" ></textarea>
 <textarea id="target" style="width: 350px; height:600px" ></textarea>
+<div style="margin-top: 10px;"><button onclick="give()">zfb捐赠</button> </div>
+<img id="give-div" style="display:none; width: 300px; margin-top: 10px;" src="./images/image.jpg">
+
+<script type="text/javascript">
+	function give() {
+		console.log("give");
+		$("#give-div").show();
+	}
+</script>
 </body>
 </html>
