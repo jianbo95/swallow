@@ -1,0 +1,19 @@
+{
+  "name": "Swallow",
+  "version": "0.0.3",
+  "author": "Jianbo",
+  "description": "Swallow 模板引擎",
+  "keywords": [
+    "模板引擎"
+  ],
+  "license": "MIT",
+  "scripts": {},
+  "dependencies": {
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-sequence": "^0.4.6",
+    "gulp-uglify": "^2.0.1",
+    "jshint": "^2.9.4",
+  }
+}
